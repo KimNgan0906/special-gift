@@ -270,7 +270,7 @@
             <h1>NHẬP PASS ĐI NGƯỜI ĐẸP</h1>
             <div class="password-wrapper">
                 <div class="password-image">
-                    <img id="girl-img-1" alt="Cute Girl">
+                    <img id="girl-img-1" alt="Ảnh 1">
                     <div class="placeholder-text" id="img-placeholder-1">
                         Đang tải ảnh...<br>
                         <small>Đặt file 1.png trong cùng thư mục</small>
@@ -297,7 +297,7 @@
         <div id="greeting2" class="greeting-container">sinh nhật</div>
         <div id="greeting3" class="greeting-container">bạn yêu</div>
         <div id="gift" class="gift-container">
-            <img id="girl-img-2" alt="Gift">
+            <img id="girl-img-2" alt="Ảnh 2">
             <button id="gift-button">Quà nè</button>
         </div>
     </div>
@@ -305,50 +305,37 @@
     <!-- ======================= PAGE 3: VŨ TRỤ ======================= -->
     <div id="galaxy-page" class="page">
          <canvas id="galaxy-canvas"></canvas>
-         <!-- <div class="galaxy-controls">
-            <div style="font-weight: bold; margin-bottom: 10px; color: #ff69b4;">🎮 Điều khiển</div>
-            <div class="control-item">
-                <span class="control-icon">🖱️</span>
-                <span>Kéo để xoay</span>
-            </div>
-            <div class="control-item">
-                <span class="control-icon">🔄</span>
-                <span>Cuộn để zoom</span>
-            </div>
-            <div class="control-item">
-                <span class="control-icon">📱</span>
-                <span>Touch: 1 ngón xoay, 2 ngón zoom</span>
-            </div>
-            <div class="control-item">
-                <span class="control-icon">🎆</span>
-                <span>Pháo hoa liên tục</span>
-            </div>
-         </div> -->
     </div>
 
+    <!-- Audio element -->
+    <audio id="galaxy-audio" src="traoem1.MP3" loop></audio>
+
     <script>
-        // --- CẤU HÌNH ĐƯỜNG DẪN ẢNH ---
-        const imagePaths = [
-            '1.png',                    // Thử file trong cùng thư mục
-            './1.png',                  // Thử với ./
-            './img/1.png',              // Thử trong thư mục img
-            'img/1.png',                // Thử img/ mà không có ./
-            '../1.png',                 // Thử thư mục cha
-            'https://picsum.photos/200/200?random=1', // Ảnh demo nếu không tìm thấy
+        // --- CẤU HÌNH ĐƯỜNG DẪN ẢNH CHO TỪNG TRANG ---
+        const imagePathsPage1 = [
+            './login1.jpg', './img/1.png', 'img/1.png', '../1.png', 
+            'https://picsum.photos/200/200?random=1'
+        ];
+        const imagePathsPage2 = [
+            './chucmung.jpg', './img/2.png', 'img/2.png', '../2.png', 
+            'https://picsum.photos/250/250?random=2'
+        ];
+        const imagePathsPage3 = [
+            './galaxy.jpg', './img/3.png', 'img/3.png', '../3.png',
+            'https://picsum.photos/200/200?random=3'
         ];
 
-        // Biến global để lưu texture đã tải thành công
+        // Biến global để lưu texture cho trang vũ trụ
         let globalTexture = null;
 
-        // Hàm tải ảnh với fallback (cho HTML img)
-        function loadImageWithFallback(imgElement, placeholderElement, paths, index = 0) {
+        // Hàm tải ảnh với fallback (cho thẻ <img> của HTML)
+        function loadImageWithFallback(imgElement, placeholderElement, paths, imageName, index = 0) {
             if (index >= paths.length) {
-                // Nếu không tìm thấy ảnh nào, hiển thị placeholder
                 if (placeholderElement) {
                     placeholderElement.innerHTML = `
                         ❌ Không tìm thấy ảnh!<br>
                         <small style="color: #666;">
-                            Hãy đặt file "1.png" vào:<br>
+                            Hãy đặt file "${imageName}" vào:<br>
                             - Cùng thư mục với file HTML<br>
                             - Hoặc trong thư mục "img/"
                         </small>
@@ -361,40 +348,41 @@
             const testImg = new Image();
             
             testImg.onload = function() {
-                // Ảnh tải thành công
                 imgElement.src = currentPath;
                 imgElement.classList.add('loaded');
                 if (placeholderElement) {
                     placeholderElement.style.display = 'none';
                 }
-                console.log(`✅ Đã tải ảnh từ: ${currentPath}`);
-                
-                // Đồng thời tạo texture cho Three.js
-                createGlobalTexture(currentPath);
+                console.log(`✅ Đã tải ảnh ${imageName} từ: ${currentPath}`);
             };
             
             testImg.onerror = function() {
-                // Ảnh lỗi, thử đường dẫn tiếp theo
                 console.log(`❌ Không tìm thấy ảnh tại: ${currentPath}`);
-                loadImageWithFallback(imgElement, placeholderElement, paths, index + 1);
+                loadImageWithFallback(imgElement, placeholderElement, paths, imageName, index + 1);
             };
             
             testImg.src = currentPath;
         }
 
-        // Tạo global texture từ ảnh đã tải thành công
-        function createGlobalTexture(imagePath) {
+        // Hàm tải texture cho Galaxy (Trang 3) với fallback
+        function loadGalaxyTextureWithFallback(paths, index = 0) {
+            if (index >= paths.length) {
+                console.log('❌ Không tìm thấy ảnh cho Galaxy, tạo texture thay thế.');
+                createFallbackTexture();
+                return;
+            }
+            const currentPath = paths[index];
             const textureLoader = new THREE.TextureLoader();
             textureLoader.load(
-                imagePath,
-                function(texture) {
+                currentPath,
+                function(texture) { // OnLoad
                     globalTexture = texture;
-                    console.log('✅ Đã tạo global texture cho Galaxy');
+                    console.log(`✅ Đã tải texture cho Galaxy từ: ${currentPath}`);
                 },
-                undefined,
-                function(error) {
-                    console.log('❌ Không thể tạo texture từ ảnh đã tải');
-                    createFallbackTexture();
+                undefined, // onProgress
+                function(err) { // onError
+                    console.log(`❌ Không tải được texture từ: ${currentPath}`);
+                    loadGalaxyTextureWithFallback(paths, index + 1);
                 }
             );
         }
@@ -406,7 +394,6 @@
             canvas.height = 64;
             const ctx = canvas.getContext('2d');
             
-            // Tạo gradient đẹp
             const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
             gradient.addColorStop(0, '#ff69b4');
             gradient.addColorStop(0.5, '#9c27b0');
@@ -415,7 +402,6 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 64, 64);
             
-            // Thêm text
             ctx.fillStyle = 'white';
             ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
@@ -425,16 +411,22 @@
             ctx.fillText('GIFT', 32, 45);
             
             globalTexture = new THREE.CanvasTexture(canvas);
-            console.log('✅ Đã tạo fallback texture');
+            console.log('✅ Đã tạo fallback texture cho Galaxy');
         }
 
-        // Tải ảnh cho cả hai trang
+        // --- Bắt đầu tải các ảnh ---
+        // Tải ảnh cho Trang 1
         const img1 = document.getElementById('girl-img-1');
-        const img2 = document.getElementById('girl-img-2');
         const placeholder1 = document.getElementById('img-placeholder-1');
+        loadImageWithFallback(img1, placeholder1, imagePathsPage1, '1.png');
+
+        // Tải ảnh cho Trang 2
+        const img2 = document.getElementById('girl-img-2');
+        loadImageWithFallback(img2, null, imagePathsPage2, '2.png');
         
-        loadImageWithFallback(img1, placeholder1, imagePaths);
-        loadImageWithFallback(img2, null, imagePaths);
+        // Tải texture cho Trang 3 (Galaxy)
+        loadGalaxyTextureWithFallback(imagePathsPage3);
+
 
         // --- LOGIC CHUYỂN TRANG ---
         let matrixInterval;
@@ -460,7 +452,7 @@
             const passwordDisplay = document.getElementById('password-display');
             const statusMessage = document.getElementById('status-message');
             const keypadButtons = document.querySelectorAll('#password-page .keypad button');
-            const correctPassword = '111111';
+            const correctPassword = '140805';
             let enteredPassword = '';
 
             keypadButtons.forEach(button => {
@@ -552,6 +544,13 @@
 
         // --- LOGIC TRANG VŨ TRỤ ---
         function initGalaxyPage() {
+            const backgroundMusic = document.getElementById('galaxy-audio');
+            if (backgroundMusic) {
+                backgroundMusic.play().catch(error => {
+                    console.log("Lỗi tự động phát nhạc:", error);
+                });
+            }
+            
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
             const renderer = new THREE.WebGLRenderer({ 
@@ -570,9 +569,8 @@
             let mouseX = 0;
             let mouseY = 0;
             let fireworks = [];
-            let fireworksSchedule = []; // Lịch trình tạo pháo hoa
 
-            // ===== SỰ KIỆN CHUỘT =====
+            // ===== SỰ KIỆN CHUỘT VÀ TOUCH =====
             const canvas = document.getElementById('galaxy-canvas');
             
             canvas.addEventListener('mousedown', (e) => {
@@ -588,8 +586,6 @@
                     
                     cameraAngleY += deltaX * 0.01;
                     cameraAngleX -= deltaY * 0.01;
-                    
-                    // Giới hạn góc X
                     cameraAngleX = Math.max(-Math.PI/3, Math.min(Math.PI/3, cameraAngleX));
                     
                     mouseX = e.clientX;
@@ -601,14 +597,13 @@
                 isMouseDown = false;
             });
 
-            // Zoom bằng bánh xe chuột
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 cameraDistance += e.deltaY * 0.1;
                 cameraDistance = Math.max(50, Math.min(300, cameraDistance));
             });
 
-            // Touch events cho mobile
+            // Touch events
             let touchDistance = 0;
             canvas.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
@@ -652,56 +647,85 @@
                 isMouseDown = false;
             });
 
-            // ===== LỚP FIREWORK CẢI THIỆN =====
-            class Firework {
+            // ===== ENHANCED PARTICLE TEXTURE - BRIGHTER =====
+            function createParticleTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                
+                const centerX = 32;
+                const centerY = 32;
+                const radius = 30;
+                
+                // Create brighter radial gradient
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.1, 'rgba(255, 255, 255, 1)');   // Larger bright core
+                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.9)'); // Extended brightness
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.7)');
+                gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 64, 64);
+                
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            // ===== ENHANCED REALISTIC FIREWORK CLASS - BRIGHTER =====
+            class RealisticFirework {
                 constructor(x, y, z, type = 'normal') {
                     this.particles = [];
                     this.center = new THREE.Vector3(x, y, z);
                     this.age = 0;
-                    this.maxAge = type === 'large' ? 4 : 3;
+                    this.maxAge = 4; // Longer duration
                     this.type = type;
+                    this.particleTexture = createParticleTexture();
                     
-                    // Tạo các hạt pháo hoa với nhiều biến thể
-                    let particleCount, colors, spreadFactor;
+                    let particleCount, colors, spreadFactor, particleSize;
                     
                     switch (type) {
                         case 'large':
-                            particleCount = 60 + Math.random() * 40;
-                            colors = [0xff69b4, 0x00ff88, 0x0088ff, 0xff8800, 0x8800ff, 0xffffff, 0xff1493, 0x00ffff];
+                            particleCount = 40; // More particles
+                            colors = [0xffffff, 0xffd700, 0xffff00, 0xffa500]; // Brighter colors
                             spreadFactor = 50;
+                            particleSize = 5;
+                            this.maxAge = 5;
                             break;
                         case 'small':
-                            particleCount = 15 + Math.random() * 10;
-                            colors = [0xffffff, 0xff69b4, 0x00ff88];
-                            spreadFactor = 25;
+                            particleCount = 15;
+                            colors = [0xffffff, 0xff69b4, 0xff1493, 0xffc0cb];
+                            spreadFactor = 30;
+                            particleSize = 3;
                             break;
                         case 'heart':
-                            particleCount = 30;
-                            colors = [0xff69b4, 0xff1493, 0xff0080];
-                            spreadFactor = 30;
+                            particleCount = 25;
+                            colors = [0xffffff, 0xff1493, 0xff69b4, 0xff00ff];
+                            spreadFactor = 35;
+                            particleSize = 4;
                             break;
                         default:
-                            particleCount = 35 + Math.random() * 25;
-                            colors = [0xff69b4, 0x00ff88, 0x0088ff, 0xff8800, 0x8800ff, 0xffffff];
-                            spreadFactor = 35;
+                            particleCount = 30; // More particles
+                            colors = [0xffffff, 0x00ffff, 0x88ffff, 0xaaffff]; // Brighter blues/whites
+                            spreadFactor = 40;
+                            particleSize = 4;
                     }
-                    
-                    const baseColor = colors[Math.floor(Math.random() * colors.length)];
                     
                     for (let i = 0; i < particleCount; i++) {
                         let velocity;
                         
                         if (type === 'heart') {
-                            // Tạo hình trái tim
+                            // Heart shape pattern
                             const t = (i / particleCount) * Math.PI * 2;
                             const heartX = 16 * Math.pow(Math.sin(t), 3);
                             const heartY = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                            velocity = new THREE.Vector3(heartX * 0.8, heartY * 0.8, (Math.random() - 0.5) * 10);
+                            velocity = new THREE.Vector3(heartX * 0.7, heartY * 0.7, (Math.random() - 0.5) * 10);
                         } else {
-                            // Tạo vận tốc ngẫu nhiên theo hình cầu
+                            // Spherical explosion
                             const phi = Math.random() * Math.PI * 2;
                             const theta = Math.acos(2 * Math.random() - 1);
-                            const speed = spreadFactor * (0.5 + Math.random() * 0.5);
+                            const speed = spreadFactor * (0.4 + Math.random() * 0.6);
                             
                             velocity = new THREE.Vector3(
                                 Math.sin(theta) * Math.cos(phi) * speed,
@@ -710,33 +734,39 @@
                             );
                         }
                         
-                        const particle = {
-                            position: this.center.clone(),
-                            velocity: velocity,
-                            life: 1.0,
-                            decay: 0.015 + Math.random() * 0.02,
-                            originalLife: 1.0,
-                            size: type === 'large' ? 0.5 + Math.random() * 0.3 : 0.3 + Math.random() * 0.2,
-                            twinkleSpeed: 5 + Math.random() * 10
-                        };
+                        const color = colors[Math.floor(Math.random() * colors.length)];
                         
-                        // Tạo sprite cho mỗi hạt với hiệu ứng đẹp hơn
-                        const geometry = new THREE.SphereGeometry(particle.size, 8, 8);
-                        const material = new THREE.MeshBasicMaterial({ 
-                            color: baseColor,
+                        // Create brighter sprite material
+                        const material = new THREE.SpriteMaterial({
+                            map: this.particleTexture,
+                            color: color,
                             transparent: true,
-                            opacity: 1.0
+                            opacity: 1,
+                            blending: THREE.AdditiveBlending,
+                            alphaTest: 0.001
                         });
                         
-                        particle.mesh = new THREE.Mesh(geometry, material);
-                        particle.mesh.position.copy(particle.position);
-                        scene.add(particle.mesh);
+                        const sprite = new THREE.Sprite(material);
+                        sprite.position.copy(this.center);
+                        sprite.scale.setScalar(particleSize);
+                        
+                        const particle = {
+                            sprite: sprite,
+                            velocity: velocity,
+                            life: 1.0,
+                            decay: 0.2 + Math.random() * 0.1, // Slower decay
+                            originalLife: 1.0,
+                            initialSize: particleSize,
+                            twinkleSpeed: 6 + Math.random() * 8,
+                            twinkleOffset: Math.random() * Math.PI * 2
+                        };
                         
                         this.particles.push(particle);
+                        scene.add(sprite);
                     }
                     
-                    // Thêm hiệu ứng ánh sáng
-                    this.light = new THREE.PointLight(baseColor, 3, 100);
+                    // Brighter central light burst
+                    this.light = new THREE.PointLight(colors[0], 8, 200); // Brighter intensity
                     this.light.position.copy(this.center);
                     scene.add(this.light);
                 }
@@ -744,204 +774,360 @@
                 update(deltaTime) {
                     this.age += deltaTime;
                     
-                    // Cập nhật ánh sáng
+                    // Update light intensity - brighter and longer lasting
                     if (this.light) {
-                        this.light.intensity = Math.max(0, 3 * (1 - this.age / this.maxAge));
-                        if (this.light.intensity <= 0.1) {
+                        const lightLife = Math.max(0, 1 - (this.age / (this.maxAge * 0.4)));
+                        this.light.intensity = 8 * lightLife * lightLife;
+                        
+                        if (this.light.intensity <= 0.2) {
                             scene.remove(this.light);
                             this.light = null;
                         }
                     }
                     
                     this.particles = this.particles.filter(particle => {
-                        // Cập nhật vị trí
-                        particle.position.add(particle.velocity.clone().multiplyScalar(deltaTime));
+                        // Update position
+                        particle.sprite.position.add(particle.velocity.clone().multiplyScalar(deltaTime));
                         
-                        // Áp dụng ma sát và trọng lực
-                        particle.velocity.multiplyScalar(0.985); // Ma sát không khí
-                        particle.velocity.y -= 25 * deltaTime; // Trọng lực
+                        // Apply physics
+                        particle.velocity.multiplyScalar(0.99); // Less air resistance
+                        particle.velocity.y -= 20 * deltaTime; // Reduced gravity
                         
-                        // Cập nhật life với hiệu ứng fade out mềm mại
+                        // Update life
                         particle.life -= particle.decay * deltaTime;
                         
-                        // Cập nhật mesh với hiệu ứng twinkle
-                        particle.mesh.position.copy(particle.position);
-                        
-                        // Hiệu ứng twinkle (lấp lánh)
-                        const twinkle = Math.sin(Date.now() * particle.twinkleSpeed * 0.001) * 0.3 + 0.7;
-                        const fadeOpacity = Math.max(0, particle.life) * twinkle;
-                        particle.mesh.material.opacity = fadeOpacity;
-                        
-                        // Hiệu ứng scale theo thời gian
-                        const scaleLife = Math.max(0.1, particle.life);
-                        particle.mesh.scale.setScalar(scaleLife);
-                        
                         if (particle.life <= 0) {
-                            scene.remove(particle.mesh);
+                            scene.remove(particle.sprite);
                             return false;
                         }
+                        
+                        // Enhanced brightness and twinkle effects
+                        const fadeOpacity = Math.pow(particle.life, 1.2); // Less harsh fade
+                        const twinkle = 0.8 + 0.2 * Math.sin(Date.now() * particle.twinkleSpeed * 0.001 + particle.twinkleOffset);
+                        particle.sprite.material.opacity = fadeOpacity * twinkle;
+                        
+                        // Scale effect - particles shrink as they fade
+                        const scaleLife = 0.4 + 0.6 * particle.life;
+                        particle.sprite.scale.setScalar(particle.initialSize * scaleLife);
+                        
                         return true;
                     });
                     
-                    return this.particles.length > 0 && this.age < this.maxAge;
+                    return this.particles.length > 0 || (this.light && this.light.intensity > 0.2);
                 }
             }
 
-            // ===== HỆ THỐNG QUẢN LÝ PHÁO HOA CẢI THIỆN =====
-            let fireworkTimer = 0;
-            let nextFireworkTime = 0;
-            const fireworkPatterns = [
-                { interval: 0.8, type: 'normal', count: 1 },
-                { interval: 1.2, type: 'small', count: 3 },
-                { interval: 2.0, type: 'large', count: 1 },
-                { interval: 1.5, type: 'heart', count: 1 },
-                { interval: 0.5, type: 'small', count: 5 }, // Burst mode
-            ];
-            let currentPatternIndex = 0;
-
-            // Tạo pháo hoa theo pattern
-            function createFireworksByPattern(pattern) {
-                for (let i = 0; i < pattern.count; i++) {
-                    setTimeout(() => {
-                        const x = (Math.random() - 0.5) * 300;
-                        const y = 20 + Math.random() * 80;
-                        const z = (Math.random() - 0.5) * 300;
-                        fireworks.push(new Firework(x, y, z, pattern.type));
-                    }, i * 100); // Delay nhỏ giữa các pháo hoa trong cùng pattern
-                }
-            }
-
-            // Tạo pháo hoa đặc biệt
-            function createSpecialFireworks() {
-                // Tạo vòng tròn pháo hoa
-                const centerX = 0, centerY = 60, centerZ = 0;
-                const radius = 80;
-                const count = 8;
+            // Create brighter star texture
+            function createStarTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 32;
+                canvas.height = 32;
+                const ctx = canvas.getContext('2d');
                 
-                for (let i = 0; i < count; i++) {
-                    setTimeout(() => {
-                        const angle = (i / count) * Math.PI * 2;
-                        const x = centerX + Math.cos(angle) * radius;
-                        const z = centerZ + Math.sin(angle) * radius;
-                        const y = centerY + (Math.random() - 0.5) * 20;
-                        fireworks.push(new Firework(x, y, z, 'large'));
-                    }, i * 150);
+                const centerX = 16;
+                const centerY = 16;
+                
+                // Create brighter star glow effect
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 16);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.2, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+                gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 32, 32);
+                
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            // ===== ENHANCED LEO PLANET CREATION =====
+            function createLeoTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                // Create golden-pink gradient background
+                const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+                gradient.addColorStop(0, 'rgba(255, 215, 180, 1)');    // Warm gold-pink center
+                gradient.addColorStop(0.3, 'rgba(255, 182, 193, 0.9)'); // Light pink
+                gradient.addColorStop(0.7, 'rgba(255, 105, 180, 0.6)'); // Hot pink
+                gradient.addColorStop(1, 'rgba(218, 112, 214, 0.3)');   // Orchid fade
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 512, 512);
+
+                // Add romantic texture pattern
+                ctx.globalCompositeOperation = 'overlay';
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const size = Math.random() * 3 + 1;
+                    ctx.fillStyle = `rgba(255, 192, 203, ${Math.random() * 0.4})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
                 }
+
+                ctx.globalCompositeOperation = 'source-over';
+
+                // Draw Leo symbol with romantic styling
+                ctx.font = 'bold 300px Arial';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.strokeStyle = '#FF69B4';
+                ctx.lineWidth = 8;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = '#FF1493';
+                ctx.shadowBlur = 40;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+
+                // Draw shadow first
+                ctx.fillStyle = 'rgba(255, 20, 147, 0.4)';
+                ctx.fillText('♌', 260, 260);
+                
+                // Draw main symbol
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText('♌', 256, 256);
+                ctx.strokeText('♌', 256, 256);
+
+                return new THREE.CanvasTexture(canvas);
             }
 
-            // Tự động tạo pháo hoa đặc biệt mỗi 15 giây
-            setInterval(createSpecialFireworks, 15000);
-
-            // Nền vũ trụ với nhiều sao
-            const starGeometry = new THREE.BufferGeometry();
-            const starCount = 25000;
-            const posArray = new Float32Array(starCount * 3);
-            for (let i = 0; i < starCount * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 3000;
-            }
-            starGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const starMaterial = new THREE.PointsMaterial({ size: 1.2, color: 0xffffff });
-            const starMesh = new THREE.Points(starGeometry, starMaterial);
-            scene.add(starMesh);
-            
-            // Ánh sáng màu
-            const lightColors = [0x00ff88, 0xff0088, 0x0088ff, 0xff8800, 0x8800ff];
-            const nebulaLights = [];
-            lightColors.forEach((color, index) => {
-                const light = new THREE.PointLight(color, 2, 800);
-                const angle = (index / lightColors.length) * Math.PI * 2;
-                light.position.set(
-                    Math.cos(angle) * 200,
-                    (Math.random() - 0.5) * 100,
-                    Math.sin(angle) * 200
-                );
-                nebulaLights.push(light);
-                scene.add(light);
+            // Create enhanced Leo planet with romantic colors
+            const leoTexture = createLeoTexture();
+            const planetGeometry = new THREE.SphereGeometry(18, 64, 64);
+            const planetMaterial = new THREE.MeshStandardMaterial({
+                map: leoTexture,
+                emissiveMap: leoTexture,
+                emissive: 0xFF69B4, // Pink emissive
+                emissiveIntensity: 0.6,
+                metalness: 0.1,
+                roughness: 0.4,
+                transparent: false
             });
-
-            // Hành tinh chính
-            const planet = new THREE.Mesh(
-                new THREE.SphereGeometry(12, 64, 64),
-                new THREE.MeshStandardMaterial({ 
-                    color: 0xffa0e0, 
-                    metalness: 0.3, 
-                    roughness: 0.2, 
-                    emissive: 0xff69b4, 
-                    emissiveIntensity: 0.4 
-                })
-            );
+            
+            const planet = new THREE.Mesh(planetGeometry, planetMaterial);
             scene.add(planet);
 
-            // Vòng bao quanh hành tinh
+            // Add romantic planetary glow effect
+            const glowGeometry = new THREE.SphereGeometry(22, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xFF69B4, // Pink glow
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide
+            });
+            
+            const planetGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+            scene.add(planetGlow);
+
+            // Enhanced romantic lighting system
+            const sunLight = new THREE.DirectionalLight(0xFFB6C1, 2.5); // Light pink
+            sunLight.position.set(100, 50, 50);
+            scene.add(sunLight);
+
+            const centerSparkleLight = new THREE.PointLight(0xFF69B4, 4, 100); // Pink center light
+            centerSparkleLight.position.set(0, 0, 0);
+            scene.add(centerSparkleLight);
+
+            // Create realistic star texture and constellation
+            const starTexture = createStarTexture();
+            const constellationGroup = new THREE.Group();
+            const constellationPoints = [
+                {x: -8, y: 12, z: 0}, {x: 0, y: 15, z: 0}, {x: 8, y: 12, z: 0},
+                {x: 12, y: 5, z: 0}, {x: 10, y: -2, z: 0}, {x: 5, y: -8, z: 0},
+                {x: -5, y: -8, z: 0}, {x: -10, y: -2, z: 0}, {x: -12, y: 5, z: 0}
+            ];
+
+            constellationPoints.forEach(point => {
+                const starMaterial = new THREE.SpriteMaterial({
+                    map: starTexture,
+                    color: 0xFFB6C1, // Pink stars
+                    transparent: true,
+                    opacity: 0.9,
+                    blending: THREE.AdditiveBlending
+                });
+                const star = new THREE.Sprite(starMaterial);
+                star.position.set(point.x + 25, point.y, point.z);
+                star.scale.setScalar(1.8);
+                constellationGroup.add(star);
+            });
+            scene.add(constellationGroup);
+
+            // Enhanced planetary particles with romantic pink glow
+            const particleGeometry = new THREE.BufferGeometry();
+            const particleCount = 180;
+            const posArray = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                const radius = 25 + Math.random() * 15;
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.acos(2 * Math.random() - 1);
+                
+                posArray[i] = radius * Math.sin(theta) * Math.cos(phi);
+                posArray[i + 1] = radius * Math.sin(theta) * Math.sin(phi);
+                posArray[i + 2] = radius * Math.cos(theta);
+            }
+            
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMaterial = new THREE.PointsMaterial({
+                map: createParticleTexture(),
+                size: 3.5,
+                color: 0xFFB6C1, // Pink particles
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: false
+            });
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            // Enhanced pink ring system
             const ring = new THREE.Mesh(
-                new THREE.TorusGeometry(18, 0.3, 8, 100),
+                new THREE.TorusGeometry(22, 0.4, 16, 100),
                 new THREE.MeshBasicMaterial({ 
-                    color: 0xffffff, 
+                    color: 0xFFC0CB, // Pink ring
                     side: THREE.DoubleSide, 
                     transparent: true, 
-                    opacity: 0.8 
+                    opacity: 0.7 
                 })
             );
             ring.rotation.x = Math.PI / 2.2;
             scene.add(ring);
-            
-            // Mặt trăng nhỏ
-            const moon = new THREE.Mesh(
-                new THREE.SphereGeometry(3, 32, 32),
-                new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x444444 })
-            );
-            scene.add(moon);
-            
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-            scene.add(ambientLight);
 
-            // Tạo các nhóm ảnh sử dụng globalTexture
+            // Beautiful moon with romantic texture
+            const moonGeometry = new THREE.SphereGeometry(4, 32, 32);
+            const moonMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xF5F5DC, // Romantic beige
+                roughness: 0.9,
+                metalness: 0.1,
+                emissive: 0xFFE4E1, // Misty rose
+                emissiveIntensity: 0.1
+            });
+            const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+            scene.add(moon);
+
+            // Enhanced starfield with romantic circular stars
+            const starGeometry = new THREE.BufferGeometry();
+            const starCount = 12000;
+            const starPositions = new Float32Array(starCount * 3);
+            const starSizes = new Float32Array(starCount);
+            
+            for (let i = 0; i < starCount; i++) {
+                // Position
+                starPositions[i * 3] = (Math.random() - 0.5) * 2000;
+                starPositions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
+                starPositions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
+                
+                // Random sizes for realism
+                starSizes[i] = Math.random() * 2.5 + 0.8; // Slightly bigger
+            }
+            
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+            
+            const starMaterial = new THREE.PointsMaterial({ 
+                map: starTexture,
+                size: 2.2, // Brighter stars
+                sizeAttenuation: false,
+                transparent: true,
+                opacity: 1,
+                blending: THREE.AdditiveBlending,
+                vertexColors: false,
+                color: 0xffffff
+            });
+            const starMesh = new THREE.Points(starGeometry, starMaterial);
+            scene.add(starMesh);
+
+            // Optimized firework management with brighter realistic effects
+            let fireworkTimer = 0;
+            const fireworkSchedule = [
+                { time: 2, type: 'normal', count: 1 },
+                { time: 4, type: 'large', count: 1 },
+                { time: 6, type: 'small', count: 2 },
+                { time: 7.5, type: 'heart', count: 1 },
+                { time: 9, type: 'normal', count: 2 },
+                { time: 11, type: 'large', count: 1 }
+            ];
+            let scheduleIndex = 0;
+
+            function createFirework(type = 'normal') {
+                const x = (Math.random() - 0.5) * 180;
+                const y = 40 + Math.random() * 50;
+                const z = (Math.random() - 0.5) * 180;
+                fireworks.push(new RealisticFirework(x, y, z, type));
+            }
+
+            // Enhanced burst firework function
+            function createFireworkBurst() {
+                const centerX = (Math.random() - 0.5) * 100;
+                const centerY = 60 + Math.random() * 30;
+                const centerZ = (Math.random() - 0.5) * 100;
+                
+                const types = ['normal', 'small', 'large', 'heart'];
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => {
+                        const offsetX = centerX + (Math.random() - 0.5) * 40;
+                        const offsetY = centerY + (Math.random() - 0.5) * 20;
+                        const offsetZ = centerZ + (Math.random() - 0.5) * 40;
+                        fireworks.push(new RealisticFirework(offsetX, offsetY, offsetZ, types[i % types.length]));
+                    }, i * 250);
+                }
+            }
+
+            // Schedule special burst every 12 seconds (more frequent)
+            setInterval(createFireworkBurst, 12000);
+
+            // Create image layers with SLOWER movement
             const imageGroups = [];
             const layers = [
-                { count: 30, radius: 40, speed: 0.008, size: [6, 8] },
-                { count: 40, radius: 70, speed: -0.005, size: [4, 6] },
-                { count: 50, radius: 100, speed: 0.003, size: [3, 5] },
-                { count: 35, radius: 130, speed: -0.002, size: [2, 4] },
-                { count: 25, radius: 160, speed: 0.001, size: [2, 3] }
+                // Tốc độ cũ là 0.003, giảm còn 0.0015
+                { count: 20, radius: 45, speed: 0.0015, size: [4, 6] },
+
+                // Tốc độ cũ là -0.002, giảm còn -0.001
+                { count: 25, radius: 70, speed: -0.001, size: [3, 5] }, 
+
+                // Tốc độ cũ là 0.0015, giảm còn 0.0007
+                { count: 30, radius: 95, speed: 0.0007, size: [2, 4] } 
             ];
 
-            // Tạo ảnh với delay để đảm bảo texture đã sẵn sàng
             function createImageLayers() {
-                const texture = globalTexture;
-                if (!texture) {
-                    console.log('⏳ Texture chưa sẵn sàng, tạo fallback...');
-                    createFallbackTexture();
+                if (!globalTexture) {
+                    console.log("Chưa có texture cho Galaxy, đang chờ...");
+                    setTimeout(createImageLayers, 500);
                     return;
                 }
 
-                console.log('🌟 Đang tạo các tầng ảnh...');
-                layers.forEach((layer, layerIndex) => {
+                layers.forEach(layer => {
                     const imageGroup = new THREE.Group();
                     
                     for (let i = 0; i < layer.count; i++) {
                         const material = new THREE.SpriteMaterial({ 
-                            map: texture,
+                            map: globalTexture,
                             transparent: true,
-                            opacity: 0.9
+                            opacity: 0.85 // Slightly more visible
                         });
                         const sprite = new THREE.Sprite(material);
                         
-                        const angle = (i / layer.count) * Math.PI * 2 + Math.random() * 0.5;
-                        const radiusVariation = layer.radius + (Math.random() - 0.5) * 20;
-                        const height = (Math.random() - 0.5) * 30;
+                        const angle = (i / layer.count) * Math.PI * 2;
+                        const radiusVar = layer.radius + (Math.random() - 0.5) * 15;
+                        const height = (Math.random() - 0.5) * 20;
                         
-                        const x = Math.cos(angle) * radiusVariation;
-                        const z = Math.sin(angle) * radiusVariation;
-                        const y = height * (1 - Math.abs(radiusVariation - layer.radius) / 20);
-                        
-                        sprite.position.set(x, y, z);
+                        sprite.position.set(
+                            Math.cos(angle) * radiusVar,
+                            height,
+                            Math.sin(angle) * radiusVar
+                        );
                         
                         const scale = layer.size[0] + Math.random() * (layer.size[1] - layer.size[0]);
                         sprite.scale.set(scale, scale, scale);
                         
                         sprite.userData = {
                             originalOpacity: material.opacity,
-                            twinkleSpeed: 0.5 + Math.random() * 2,
+                            twinkleSpeed: 0.5 + Math.random() * 1, // Slower twinkling
                             twinkleOffset: Math.random() * Math.PI * 2
                         };
                         
@@ -952,93 +1138,210 @@
                     imageGroups.push(imageGroup);
                     scene.add(imageGroup);
                 });
-                console.log(`✅ Đã tạo ${imageGroups.length} tầng ảnh với tổng cộng ${imageGroups.reduce((sum, group) => sum + group.children.length, 0)} ảnh`);
             }
 
-            // Delay để texture có thời gian tải
-            setTimeout(createImageLayers, 1000);
+            setTimeout(createImageLayers, 1000); // Bắt đầu tạo layer ảnh sau 1s
+
+            // Enhanced romantic lighting effects
+            const colorfulLights = [];
+            const lightColors = [0xFF69B4, 0xFFB6C1, 0xFFC0CB, 0xFF1493]; // All pink tones
+            lightColors.forEach((color, index) => {
+                const light = new THREE.PointLight(color, 2, 600); // Brighter intensity
+                const angle = (index / lightColors.length) * Math.PI * 2;
+                light.position.set(
+                    Math.cos(angle) * 150,
+                    Math.sin(index * 0.7) * 50,
+                    Math.sin(angle) * 150
+                );
+                colorfulLights.push(light);
+                scene.add(light);
+            });
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5); // Slightly brighter ambient
+            scene.add(ambientLight);
             
-            // Vòng tròn gạch đứt
-            const dashedRingGroup = new THREE.Group();
-            const numDashes = 120;
-            const dashRadius = 25;
-            for (let i = 0; i < numDashes; i++) {
-                if (i % 5 < 2) continue;
-                const dashGeo = new THREE.BoxGeometry(0.8, 0.15, 0.15);
-                const dashMat = new THREE.MeshBasicMaterial({ 
-                    color: 0xffffff, 
-                    transparent: true, 
-                    opacity: 0.6 
-                });
-                const dash = new THREE.Mesh(dashGeo, dashMat);
+            // =======================================================================
+            // ===== BẮT ĐẦU PHẦN CODE MỚI: CÁC CHÙM ÁNH SÁNG NHIỀU MÀU SẮC ========
+            // =======================================================================
 
-                const angle = (i / numDashes) * Math.PI * 2;
-                dash.position.set(Math.cos(angle) * dashRadius, 0, Math.sin(angle) * dashRadius);
-                dash.lookAt(planet.position);
-                dashedRingGroup.add(dash);
+            // 1. Hàm tạo texture (hình ảnh) cho các chùm sáng, có thể tùy chỉnh màu sắc
+            function createLightBeamTexture(coreColor, haloColor) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 128; // Tăng độ phân giải để có gradient mượt hơn
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Lõi luôn có màu trắng sáng
+                gradient.addColorStop(0.2, coreColor); // Màu chính
+                gradient.addColorStop(0.6, haloColor); // Vầng hào quang bên ngoài
+                // Chuyển màu hào quang về trong suốt ở viền
+                const transparentHalo = haloColor.replace(/[^,]+(?=\))/, '0');
+                gradient.addColorStop(1, transparentHalo);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 128, 128);
+                return new THREE.CanvasTexture(canvas);
             }
-            scene.add(dashedRingGroup);
 
-            // Animation loop cải thiện
-            let clock = new THREE.Clock();
+            // 2. Tạo sẵn các texture cho từng màu sắc như trong ảnh
+            const cyanTexture = createLightBeamTexture('rgba(0, 255, 255, 1)', 'rgba(0, 200, 200, 0.5)');
+            const greenTexture = createLightBeamTexture('rgba(173, 255, 47, 1)', 'rgba(0, 200, 0, 0.5)');
+            const pinkTexture = createLightBeamTexture('rgba(255, 182, 193, 1)', 'rgba(255, 20, 147, 0.5)');
+            
+            // 3. Tạo ra các chùm sáng và lưu vào một mảng
+            const lightBeams = [];
+            const beamData = [
+                // Các chùm sáng màu xanh lam (cyan)
+                { texture: cyanTexture, radius: 80, speed: 0.25, yAmp: 20 },
+                { texture: cyanTexture, radius: 120, speed: -0.2, yAmp: 15 },
+                // Các chùm sáng màu xanh lá
+                { texture: greenTexture, radius: 100, speed: 0.3, yAmp: -25 },
+                { texture: greenTexture, radius: 150, speed: 0.15, yAmp: 10 },
+                // Các chùm sáng màu hồng
+                { texture: pinkTexture, radius: 90, speed: -0.28, yAmp: 22 },
+                { texture: pinkTexture, radius: 130, speed: 0.22, yAmp: -18 },
+            ];
+
+            beamData.forEach(data => {
+                const material = new THREE.SpriteMaterial({
+                    map: data.texture,
+                    blending: THREE.AdditiveBlending, // Hiệu ứng cộng sáng, làm cho nó rực rỡ hơn
+                    transparent: true,
+                    opacity: 0.9,
+                    depthWrite: false, // Quan trọng để các vật thể trong suốt không che nhau sai cách
+                });
+                const sprite = new THREE.Sprite(material);
+                
+                const scale = 15 + Math.random() * 10; // Kích thước lớn, nổi bật hơn
+                sprite.scale.set(scale, scale, scale);
+                
+                // Lưu trữ các thuộc tính di chuyển riêng cho mỗi chùm sáng
+                sprite.userData = {
+                    baseRadius: data.radius + (Math.random() - 0.5) * 20, // Bán kính quỹ đạo ngẫu nhiên
+                    speed: data.speed * (0.8 + Math.random() * 0.4),      // Tốc độ ngẫu nhiên
+                    yAmplitude: data.yAmp + (Math.random() - 0.5) * 10,   // Biên độ lên xuống ngẫu nhiên
+                    yOffset: Math.random() * Math.PI * 2,
+                    phaseOffset: Math.random() * Math.PI * 2,             // Vị trí bắt đầu ngẫu nhiên
+                    pulseSpeed: 1 + Math.random() * 2                     // Tốc độ nhấp nháy ngẫu nhiên
+                };
+                
+                lightBeams.push(sprite);
+                scene.add(sprite); // Thêm chùm sáng vào cảnh
+            });
+            // =======================================================================
+            // ===== KẾT THÚC PHẦN CODE MỚI =========================================
+            // =======================================================================
+
+
+            // Main animation loop
+            const clock = new THREE.Clock();
             function animate() {
                 galaxyAnimationId = requestAnimationFrame(animate);
                 const deltaTime = clock.getDelta();
                 const elapsedTime = clock.getElapsedTime();
                 
-                // ===== QUẢN LÝ PHÁO HOA THÔNG MINH =====
+                // Optimized firework management with brighter realistic effects
                 fireworkTimer += deltaTime;
-                
-                if (fireworkTimer >= nextFireworkTime) {
-                    const currentPattern = fireworkPatterns[currentPatternIndex];
-                    createFireworksByPattern(currentPattern);
-                    
-                    // Cập nhật timing cho lần tạo pháo hoa tiếp theo
-                    nextFireworkTime = fireworkTimer + currentPattern.interval + (Math.random() - 0.5) * 0.5;
-                    currentPatternIndex = (currentPatternIndex + 1) % fireworkPatterns.length;
+                if (scheduleIndex < fireworkSchedule.length && fireworkTimer >= fireworkSchedule[scheduleIndex].time) {
+                    const schedule = fireworkSchedule[scheduleIndex];
+                    for (let i = 0; i < schedule.count; i++) {
+                        setTimeout(() => createFirework(schedule.type), i * 300);
+                    }
+                    scheduleIndex++;
                 }
                 
-                // Animation cơ bản
-                planet.rotation.y += 0.003;
-                ring.rotation.z += 0.002;
-                dashedRingGroup.rotation.y += 0.004;
+                // Reset schedule when complete
+                if (scheduleIndex >= fireworkSchedule.length && fireworkTimer > 13) {
+                    fireworkTimer = 0;
+                    scheduleIndex = 0;
+                }
+
+                // Enhanced planet animations - SLOWER
+                planet.rotation.y += 0.002; // Much slower
+                planetGlow.rotation.y += 0.002; // Much slower
+                ring.rotation.z += 0.0015; // Much slower
+                particles.rotation.y += 0.001; // Much slower
+                constellationGroup.rotation.y += 0.0005; // Much slower
                 
-                // Animation mặt trăng
-                moon.position.x = Math.sin(elapsedTime * 0.7) * 25;
-                moon.position.z = Math.cos(elapsedTime * 0.7) * 25;
-                moon.position.y = Math.sin(elapsedTime * 0.3) * 5;
+                // Romantic twinkling effect for constellation
+                constellationGroup.children.forEach((star, index) => {
+                    const twinkle = 0.7 + 0.3 * Math.sin(elapsedTime * (2 + index * 0.3) + index * 2);
+                    star.material.opacity = twinkle;
+                });
                 
-                // Animation các tầng ảnh (nếu có)
+                // Enhanced moon orbit with romantic lighting - SLOWER
+                moon.position.x = Math.sin(elapsedTime * 0.4) * 35; // Much slower
+                moon.position.z = Math.cos(elapsedTime * 0.4) * 35; // Much slower
+                moon.position.y = Math.sin(elapsedTime * 0.2) * 8; // Much slower
+                moon.rotation.y += 0.005; // Slower rotation
+                
+                // Enhanced romantic lighting effects
+                centerSparkleLight.intensity = 3.5 + Math.sin(elapsedTime * 3) * 1.5; // Brighter
+                planetGlow.material.opacity = 0.25 + Math.sin(elapsedTime * 1.5) * 0.1; // More visible
+                
+                // Animate romantic lights with more natural movement - SLOWER
+                colorfulLights.forEach((light, index) => {
+                    const angle = elapsedTime * 0.08 + (index * Math.PI * 2 / colorfulLights.length); // Much slower
+                    light.position.x = Math.cos(angle) * (140 + Math.sin(elapsedTime * 0.5 + index) * 20);
+                    light.position.z = Math.sin(angle) * (140 + Math.cos(elapsedTime * 0.5 + index) * 20);
+                    light.position.y = Math.sin(elapsedTime * 0.3 + index) * 30; // Slower vertical movement
+                    light.intensity = 1.8 + Math.sin(elapsedTime * 2 + index * 1.5) * 1; // Brighter
+                });
+
+                // Enhanced star twinkling
+                starMaterial.opacity = 0.9 + 0.1 * Math.sin(elapsedTime * 0.3); // Brighter, slower twinkle
+
+                // Image layer animations with MUCH slower movement and improved effects
                 imageGroups.forEach(group => {
                     group.rotation.y += group.userData.rotationSpeed;
-                    
                     group.children.forEach(sprite => {
                         const twinkle = Math.sin(elapsedTime * sprite.userData.twinkleSpeed + sprite.userData.twinkleOffset);
-                        sprite.material.opacity = sprite.userData.originalOpacity + twinkle * 0.3;
+                        sprite.material.opacity = sprite.userData.originalOpacity + twinkle * 0.15;
                     });
                 });
-                
-                // Animation đèn nebula
-                nebulaLights.forEach((light, index) => {
-                    const angle = elapsedTime * 0.1 + (index * Math.PI * 2 / nebulaLights.length);
-                    light.position.x = Math.cos(angle) * 200;
-                    light.position.z = Math.sin(angle) * 200;
-                    light.intensity = 1.5 + Math.sin(elapsedTime * 2 + index) * 0.5;
+
+                // =======================================================================
+                // ===== BẮT ĐẦU PHẦN CODE MỚI: CẬP NHẬT VỊ TRÍ CÁC CHÙM SÁNG      =====
+                // =======================================================================
+                // 3. Trong mỗi khung hình, cập nhật vị trí của các chùm sáng
+                lightBeams.forEach(beam => {
+                    // Tính toán vị trí mới dựa trên thời gian đã trôi qua để tạo quỹ đạo
+                    const t = elapsedTime * beam.userData.speed + beam.userData.phaseOffset;
+                    beam.position.x = beam.userData.baseRadius * Math.cos(t);
+                    beam.position.z = beam.userData.baseRadius * Math.sin(t);
+                    beam.position.y = beam.userData.yAmplitude * Math.sin(t * 1.5 + beam.userData.yOffset); // Chuyển động lên xuống mượt hơn
+
+                    // Thêm hiệu ứng nhấp nháy/thay đổi độ sáng
+                    beam.material.opacity = 0.6 + 0.4 * Math.sin(elapsedTime * beam.userData.pulseSpeed);
                 });
+                // =======================================================================
+                // ===== KẾT THÚC PHẦN CODE MỚI =========================================
+                // =======================================================================
                 
-                // Cập nhật vị trí camera dựa trên tương tác người dùng
+                // Update camera position
                 camera.position.x = Math.cos(cameraAngleY) * Math.cos(cameraAngleX) * cameraDistance;
                 camera.position.y = Math.sin(cameraAngleX) * cameraDistance;
                 camera.position.z = Math.sin(cameraAngleY) * Math.cos(cameraAngleX) * cameraDistance;
                 camera.lookAt(scene.position);
                 
-                // Cập nhật pháo hoa với hiệu suất tối ưu
+                // Update brighter realistic fireworks
                 fireworks = fireworks.filter(firework => firework.update(deltaTime));
+                
+                // Performance management - limit fireworks
+                if (fireworks.length > 8) { // Allow more fireworks
+                    const oldestFirework = fireworks.shift();
+                    if (oldestFirework.light) {
+                        scene.remove(oldestFirework.light);
+                    }
+                    oldestFirework.particles.forEach(particle => {
+                        scene.remove(particle.sprite);
+                    });
+                }
                 
                 renderer.render(scene, camera);
             }
             animate();
 
+            // Handle window resize
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
@@ -1047,5 +1350,4 @@
         }
     </script>
 </body>
-
 </html>
