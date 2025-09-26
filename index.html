@@ -841,174 +841,94 @@
                 return new THREE.CanvasTexture(canvas);
             }
 
-            // ===== ENHANCED LEO PLANET CREATION =====
-            function createLeoTexture() {
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-
-                // Create golden-pink gradient background
-                const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
-                gradient.addColorStop(0, 'rgba(255, 215, 180, 1)');    // Warm gold-pink center
-                gradient.addColorStop(0.3, 'rgba(255, 182, 193, 0.9)'); // Light pink
-                gradient.addColorStop(0.7, 'rgba(255, 105, 180, 0.6)'); // Hot pink
-                gradient.addColorStop(1, 'rgba(218, 112, 214, 0.3)');   // Orchid fade
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 512, 512);
-
-                // Add romantic texture pattern
-                ctx.globalCompositeOperation = 'overlay';
-                for (let i = 0; i < 100; i++) {
-                    const x = Math.random() * 512;
-                    const y = Math.random() * 512;
-                    const size = Math.random() * 3 + 1;
-                    ctx.fillStyle = `rgba(255, 192, 203, ${Math.random() * 0.4})`;
-                    ctx.beginPath();
-                    ctx.arc(x, y, size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                ctx.globalCompositeOperation = 'source-over';
-
-                // Draw Leo symbol with romantic styling
-                ctx.font = 'bold 300px Arial';
-                ctx.fillStyle = '#FFFFFF';
-                ctx.strokeStyle = '#FF69B4';
-                ctx.lineWidth = 8;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowColor = '#FF1493';
-                ctx.shadowBlur = 40;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-
-                // Draw shadow first
-                ctx.fillStyle = 'rgba(255, 20, 147, 0.4)';
-                ctx.fillText('♌', 260, 260);
-                
-                // Draw main symbol
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillText('♌', 256, 256);
-                ctx.strokeText('♌', 256, 256);
-
-                return new THREE.CanvasTexture(canvas);
-            }
-
-            // Create enhanced Leo planet with romantic colors
-            const leoTexture = createLeoTexture();
-            const planetGeometry = new THREE.SphereGeometry(18, 64, 64);
-            const planetMaterial = new THREE.MeshStandardMaterial({
-                map: leoTexture,
-                emissiveMap: leoTexture,
-                emissive: 0xFF69B4, // Pink emissive
-                emissiveIntensity: 0.6,
-                metalness: 0.1,
-                roughness: 0.4,
-                transparent: false
-            });
-            
-            const planet = new THREE.Mesh(planetGeometry, planetMaterial);
-            scene.add(planet);
-
-            // Add romantic planetary glow effect
-            const glowGeometry = new THREE.SphereGeometry(22, 32, 32);
-            const glowMaterial = new THREE.MeshBasicMaterial({
-                color: 0xFF69B4, // Pink glow
-                transparent: true,
-                opacity: 0.3,
-                side: THREE.BackSide
-            });
-            
-            const planetGlow = new THREE.Mesh(glowGeometry, glowMaterial);
-            scene.add(planetGlow);
-
-            // Enhanced romantic lighting system
-            const sunLight = new THREE.DirectionalLight(0xFFB6C1, 2.5); // Light pink
+            // Giữ lại hệ thống ánh sáng cũ để chiếu sáng không gian
+            const sunLight = new THREE.DirectionalLight(0xFFB6C1, 2.5);
             sunLight.position.set(100, 50, 50);
             scene.add(sunLight);
 
-            const centerSparkleLight = new THREE.PointLight(0xFF69B4, 4, 100); // Pink center light
+            const centerSparkleLight = new THREE.PointLight(0xFF69B4, 4, 100);
             centerSparkleLight.position.set(0, 0, 0);
             scene.add(centerSparkleLight);
 
-            // Create realistic star texture and constellation
+           // Tạo chòm sao Sư Tử chính xác theo hình ảnh thiên văn thực tế
             const starTexture = createStarTexture();
-            const constellationGroup = new THREE.Group();
-            const constellationPoints = [
-                {x: -8, y: 12, z: 0}, {x: 0, y: 15, z: 0}, {x: 8, y: 12, z: 0},
-                {x: 12, y: 5, z: 0}, {x: 10, y: -2, z: 0}, {x: 5, y: -8, z: 0},
-                {x: -5, y: -8, z: 0}, {x: -10, y: -2, z: 0}, {x: -12, y: 5, z: 0}
+            const leoConstellationGroup = new THREE.Group();
+            
+            const leoStars = [
+                // Phần "Lưỡi hái" (Đầu Sư Tử)
+                { name: 'Epsilon Leonis', x: 55, y: -5, z: 0, size: 3.5, brightness: 0.9 },    // Vị trí 0
+                { name: 'Mu Leonis',      x: 55, y: 10, z: 0, size: 3.2, brightness: 0.85 },   // Vị trí 1
+                { name: 'Zeta Leonis',    x: 25, y: 10,  z: 0, size: 3.8, brightness: 0.95 },   // Vị trí 2
+                { name: 'Gamma Leonis',   x: 20, y: -2, z: 0, size: 3.4, brightness: 0.9 },    // Vị trí 3
+                { name: 'Eta Leonis',     x: 22,  y: -15, z: 0, size: 3.1, brightness: 0.85 },  // Vị trí 4
+                { name: 'Alpha Leonis',   x: 15,  y: -30, z: 0, size: 4.8, brightness: 1.0 },   // Vị trí 5
+
+                // Phần Thân
+                { name: 'Theta Leonis',   x: -30, y:5,  z: 0, size: 3.2, brightness: 0.85 },    // Vị trí 6
+                // Delta Leonis đã bị xóa
+                { name: 'Beta Leonis',    x: -50, y: 18, z: 0, size: 4.2, brightness: 1.0 },    // Vị trí 7 (trước là 8)
+
+                // Sao phụ
+                { name: 'Rho Leonis',     x: -20, y: 15, z: 0, size: 2.8, brightness: 0.7 },    // Vị trí 8 (trước là 9)
             ];
 
-            constellationPoints.forEach(point => {
+            // Tạo các ngôi sao với hiệu ứng sáng hơn
+            leoStars.forEach(starData => {
                 const starMaterial = new THREE.SpriteMaterial({
                     map: starTexture,
-                    color: 0xFFB6C1, // Pink stars
+                    color: 0xffffff,
                     transparent: true,
-                    opacity: 0.9,
+                    opacity: starData.brightness,
                     blending: THREE.AdditiveBlending
                 });
                 const star = new THREE.Sprite(starMaterial);
-                star.position.set(point.x + 25, point.y, point.z);
-                star.scale.setScalar(1.8);
-                constellationGroup.add(star);
+                star.position.set(starData.x, starData.y, starData.z);
+                star.scale.setScalar(starData.size);
+                leoConstellationGroup.add(star);
             });
-            scene.add(constellationGroup);
 
-            // Enhanced planetary particles with romantic pink glow
-            const particleGeometry = new THREE.BufferGeometry();
-            const particleCount = 180;
-            const posArray = new Float32Array(particleCount * 3);
+        const connections = [
+            // Vẽ "Lưỡi hái" - phần đầu sư tử (dấu hỏi ngược hoàn chỉnh)
+            [0, 1], // Epsilon → Mu
+            [1, 2], // Mu → Zeta (điểm gãy)
+            [2, 3], // Zeta → Gamma (cong mạnh)
+            [3, 4], // Gamma → Eta
+            [4, 5], // Eta → Alpha (Regulus - điểm cuối)
             
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                const radius = 25 + Math.random() * 15;
-                const phi = Math.random() * Math.PI * 2;
-                const theta = Math.acos(2 * Math.random() - 1);
+            // Nối từ đầu sư tử đến thân
+            [5, 6], // Alpha (Regulus) → Theta (nối trực tiếp)
+            [3, 8], // Gamma → Rho (đã cập nhật index của Rho từ 9 -> 8)
+            
+            // Vẽ phần thân đã được đơn giản hóa
+            [6, 7], // Nối trực tiếp Theta (6) → Beta (nay là 7)
+            
+            // Đường nối sao phụ
+            [8, 7]  // Rho (nay là 8) → Beta (nay là 7)
+        ];
+
+            connections.forEach(connection => {
+                const start = leoStars[connection[0]];
+                const end = leoStars[connection[1]];
                 
-                posArray[i] = radius * Math.sin(theta) * Math.cos(phi);
-                posArray[i + 1] = radius * Math.sin(theta) * Math.sin(phi);
-                posArray[i + 2] = radius * Math.cos(theta);
-            }
-            
-            particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const particleMaterial = new THREE.PointsMaterial({
-                map: createParticleTexture(),
-                size: 3.5,
-                color: 0xFFB6C1, // Pink particles
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending,
-                sizeAttenuation: false
+                const points = [
+                    new THREE.Vector3(start.x, start.y, start.z),
+                    new THREE.Vector3(end.x, end.y, end.z)
+                ];
+                
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const lineMaterial = new THREE.LineBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                leoConstellationGroup.add(line);
             });
-            const particles = new THREE.Points(particleGeometry, particleMaterial);
-            scene.add(particles);
-
-            // Enhanced pink ring system
-            const ring = new THREE.Mesh(
-                new THREE.TorusGeometry(22, 0.4, 16, 100),
-                new THREE.MeshBasicMaterial({ 
-                    color: 0xFFC0CB, // Pink ring
-                    side: THREE.DoubleSide, 
-                    transparent: true, 
-                    opacity: 0.7 
-                })
-            );
-            ring.rotation.x = Math.PI / 2.2;
-            scene.add(ring);
-
-            // Beautiful moon with romantic texture
-            const moonGeometry = new THREE.SphereGeometry(4, 32, 32);
-            const moonMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0xF5F5DC, // Romantic beige
-                roughness: 0.9,
-                metalness: 0.1,
-                emissive: 0xFFE4E1, // Misty rose
-                emissiveIntensity: 0.1
-            });
-            const moon = new THREE.Mesh(moonGeometry, moonMaterial);
-            scene.add(moon);
+            // Xoay toàn bộ chòm sao 90 độ quanh trục Z (trục hướng về phía người xem)
+            leoConstellationGroup.rotation.z = Math.PI / 2; // Math.PI / 2 tương đương 90 độ
+            scene.add(leoConstellationGroup);
 
             // Enhanced starfield with romantic circular stars
             const starGeometry = new THREE.BufferGeometry();
@@ -1160,10 +1080,6 @@
             const ambientLight = new THREE.AmbientLight(0x404040, 0.5); // Slightly brighter ambient
             scene.add(ambientLight);
             
-            // =======================================================================
-            // ===== BẮT ĐẦU PHẦN CODE MỚI: CÁC CHÙM ÁNH SÁNG NHIỀU MÀU SẮC ========
-            // =======================================================================
-
             // 1. Hàm tạo texture (hình ảnh) cho các chùm sáng, có thể tùy chỉnh màu sắc
             function createLightBeamTexture(coreColor, haloColor) {
                 const canvas = document.createElement('canvas');
@@ -1227,10 +1143,6 @@
                 lightBeams.push(sprite);
                 scene.add(sprite); // Thêm chùm sáng vào cảnh
             });
-            // =======================================================================
-            // ===== KẾT THÚC PHẦN CODE MỚI =========================================
-            // =======================================================================
-
 
             // Main animation loop
             const clock = new THREE.Clock();
@@ -1255,28 +1167,20 @@
                     scheduleIndex = 0;
                 }
 
-                // Enhanced planet animations - SLOWER
-                planet.rotation.y += 0.002; // Much slower
-                planetGlow.rotation.y += 0.002; // Much slower
-                ring.rotation.z += 0.0015; // Much slower
-                particles.rotation.y += 0.001; // Much slower
-                constellationGroup.rotation.y += 0.0005; // Much slower
+                // Chuyển động cho các đối tượng
+                starMesh.rotation.y += 0.0001; // Giảm tốc độ quay của dải ngân hà nền
+                leoConstellationGroup.rotation.y += 0.0005; 
                 
-                // Romantic twinkling effect for constellation
-                constellationGroup.children.forEach((star, index) => {
-                    const twinkle = 0.7 + 0.3 * Math.sin(elapsedTime * (2 + index * 0.3) + index * 2);
-                    star.material.opacity = twinkle;
+                // Hiệu ứng nhấp nháy cho các ngôi sao trong chòm Sư Tử
+                leoConstellationGroup.children.forEach((child, index) => {
+                    if (child.isSprite) { 
+                        const twinkle = 0.7 + 0.3 * Math.sin(elapsedTime * (2 + index * 0.3) + index * 2);
+                        child.material.opacity = twinkle;
+                    }
                 });
                 
-                // Enhanced moon orbit with romantic lighting - SLOWER
-                moon.position.x = Math.sin(elapsedTime * 0.4) * 35; // Much slower
-                moon.position.z = Math.cos(elapsedTime * 0.4) * 35; // Much slower
-                moon.position.y = Math.sin(elapsedTime * 0.2) * 8; // Much slower
-                moon.rotation.y += 0.005; // Slower rotation
-                
                 // Enhanced romantic lighting effects
-                centerSparkleLight.intensity = 3.5 + Math.sin(elapsedTime * 3) * 1.5; // Brighter
-                planetGlow.material.opacity = 0.25 + Math.sin(elapsedTime * 1.5) * 0.1; // More visible
+                centerSparkleLight.intensity = 3.5 + Math.sin(elapsedTime * 3) * 1.5;
                 
                 // Animate romantic lights with more natural movement - SLOWER
                 colorfulLights.forEach((light, index) => {
@@ -1299,10 +1203,7 @@
                     });
                 });
 
-                // =======================================================================
-                // ===== BẮT ĐẦU PHẦN CODE MỚI: CẬP NHẬT VỊ TRÍ CÁC CHÙM SÁNG      =====
-                // =======================================================================
-                // 3. Trong mỗi khung hình, cập nhật vị trí của các chùm sáng
+                // Cập nhật vị trí các chùm sáng
                 lightBeams.forEach(beam => {
                     // Tính toán vị trí mới dựa trên thời gian đã trôi qua để tạo quỹ đạo
                     const t = elapsedTime * beam.userData.speed + beam.userData.phaseOffset;
@@ -1313,9 +1214,6 @@
                     // Thêm hiệu ứng nhấp nháy/thay đổi độ sáng
                     beam.material.opacity = 0.6 + 0.4 * Math.sin(elapsedTime * beam.userData.pulseSpeed);
                 });
-                // =======================================================================
-                // ===== KẾT THÚC PHẦN CODE MỚI =========================================
-                // =======================================================================
                 
                 // Update camera position
                 camera.position.x = Math.cos(cameraAngleY) * Math.cos(cameraAngleX) * cameraDistance;
